@@ -17,14 +17,14 @@
 SSH to your server and run
 ```bash
 # Clone this repo
-git clone https://github.com/duythongle/k8s-openresty-streaming.git  
+git clone https://github.com/ashikkaiser/openresty-streaming.git  
 # Run image and mount config files for later editing
 docker run -dit --name my_streaming_server \
   -p 80:80 \
   -p 443:443 \
   -p 1935:1935 \
-  -v ~/k8s-openresty-streaming/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf \
-  thongld/k8s-openresty-streaming:alpine-fat \
+  -v ~/openresty-streaming/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf \
+  ashikkaiser/openresty-streaming:alpine-fat \
   openresty -g "daemon off;"
 ```
 Then your browser should display OpenResty welcome home page at http://*streaming_server_ip*/ . Later on, just edit the mounted nginx.config file at `~/k8s-openresty-streaming/nginx.conf` for your needs and apply changes with command below
@@ -47,8 +47,8 @@ rtmp://*streaming_server_ip_or_domain*:1935/*my_live_stream*/*my_stream_name* an
 
 # Building from source
 ```bash
-git clone https://github.com/duythongle/k8s-openresty-streaming.git
-cd k8s-openresty-streaming
+git clone https://github.com/ashikkaiser/openresty-streaming.git
+cd openresty-streaming
 docker build -t openresty-streaming-server -f alpine-fat/Dockerfile .
 # Then run the image
 docker run -dit --name my_streaming_server \
