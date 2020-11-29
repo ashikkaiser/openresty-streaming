@@ -9,7 +9,7 @@ FROM alpine:3.7
 LABEL maintainer="Tom Le <thongld2012@gmail.com>"
 
 # Docker Build Arguments
-ARG RESTY_VERSION="1.13.6.1"
+ARG RESTY_VERSION="1.15.8.2"
 ARG RESTY_LUAROCKS_VERSION="2.4.3"
 ARG RESTY_OPENSSL_VERSION="1.0.2k"
 ARG RESTY_PCRE_VERSION="8.41"
@@ -158,6 +158,111 @@ RUN mkdir -p /var/db/GeoIP \
   tar xzf - -C /var/db/GeoIP --strip-components=1 \
   && curl -fSL https://geolite.maxmind.com/download/geoip/database/GeoLite2-ASN.tar.gz | \
   tar xzf - -C /var/db/GeoIP --strip-components=1
+
+ENV FFMPEG_VERSION=4.0
+
+ENV FFMPEG_CORE="bash \
+                 tzdata \
+                 libass \
+                 libstdc++ \
+                 libpng \
+                 libjpeg \
+                 xvidcore \
+                 x264-libs \
+                 x265 \
+                 libvpx \
+                 libvorbis \
+                 opus \
+                 lame \
+                 fdk-aac \
+                 freetype \
+                 libcrypto1.0 \
+                 libssl1.0 \
+                 jasper-libs \
+                 libavc1394 \
+                 yasm"
+
+ENV RUNTIME_DEPS="coreutils \
+                  make \
+                  cmake \
+                  gcc \
+                  g++ \
+                  clang \
+                  linux-headers \
+                  git \
+                  curl"
+
+ENV BUILD_DEPS="fdk-aac-dev \
+                freetype-dev \
+                x264-dev \
+                x265-dev \
+                yasm-dev \
+                libogg-dev \
+                libvorbis-dev \
+                opus-dev \
+                libvpx-dev \
+                lame-dev \
+                xvidcore-dev \
+                libass-dev \
+                openssl-dev \
+                musl-dev \
+                build-base \
+                libjpeg-turbo-dev \
+                libpng-dev \
+                jasper-dev \
+                libavc1394-dev \
+                libavc1394-dev \
+                clang-dev"
+
+# FFMPEG
+RUN apk update && \
+    apk add --no-cache apk-tools && \
+    echo http://nl.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories && \
+    apk update && \
+    apk add --no-cache --virtual .runtime-deps ${RUNTIME_DEPS} && \
+    apk add --no-cache ${FFMPEG_CORE} && \
+    apk add --no-cache --virtual .build-deps ${BUILD_DEPS} && \
+    export SRC=/usr \
+	DIR=$(mktemp -d) && cd ${DIR} && \
+	curl -Os http://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.gz && \
+	tar xzvf ffmpeg-${FFMPEG_VERSION}.tar.gz && \
+	cd ffmpeg-${FFMPEG_VERSION} && \
+	./configure \
+        --prefix="${SRC}" \
+        --extra-cflags="-I${SRC}/include" \
+        --extra-ldflags="-L${SRC}/lib" \
+        --bindir="${SRC}/bin" \
+        --extra-libs=-ldl \
+        --enable-version3 \
+        --enable-libmp3lame \
+        --enable-pthreads \
+        --enable-libx264 \
+        --enable-libxvid \
+        --enable-gpl \
+        --enable-postproc \
+        --enable-nonfree \
+        --enable-avresample \
+        --enable-libfdk-aac \
+        --disable-debug \
+        --enable-small \
+        --enable-openssl \
+        --enable-libx265 \
+        --enable-libopus \
+        --enable-libvorbis \
+        --enable-libvpx \
+        --enable-libfreetype \
+        --enable-libass \
+        --enable-shared \
+        --enable-pic && \
+    make && \
+    make install && \
+    make distclean && \
+	hash -r && \
+	cd /tmp && \
+	rm -rf ${DIR} && \
+	apk del .build-deps && \
+	apk del .runtime-deps && \
+    rm -rf /var/cache/apk/*
 
 RUN rm -rf /tmp/* && apk del .build-deps .gettext
 
